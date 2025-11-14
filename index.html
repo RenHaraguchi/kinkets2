@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カラオケ進行管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:hover, select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .radio-group {
+            margin-bottom: 20px;
+        }
+
+        .radio-label {
+            display: block;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f8f9ff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .radio-label:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .radio-label input[type="radio"] {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .radio-label input[type="radio"]:checked + span {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .radio-label:has(input[type="radio"]:checked) {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-box {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .result-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .highlight {
+            color: #764ba2;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .order-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .order-list li {
+            background: white;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+
+        .order-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+        }
+
+        .next-round-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-top: 20px;
+        }
+
+        .round-info {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 カラオケ進行管理</h1>
+
+        <!-- 準備フェーズ -->
+        <div id="setupPhase">
+            <div class="section">
+                <label for="participantCount">参加人数を選択:</label>
+                <select id="participantCount">
+                    <option value="">選択してください</option>
+                    <option value="1">1人</option>
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                    <option value="4">4人</option>
+                    <option value="5">5人</option>
+                    <option value="6">6人</option>
+                    <option value="7">7人</option>
+                    <option value="8">8人</option>
+                    <option value="9">9人</option>
+                    <option value="10">10人</option>
+                    <option value="11">11人</option>
+                    <option value="12">12人</option>
+                    <option value="13">13人</option>
+                    <option value="14">14人</option>
+                    <option value="15">15人</option>
+                    <option value="16">16人</option>
+                    <option value="17">17人</option>
+                    <option value="18">18人</option>
+                    <option value="19">19人</option>
+                    <option value="20">20人</option>
+                </select>
+                <button onclick="startFirstSong()">1発目の準備へ</button>
+            </div>
+        </div>
+
+        <!-- 1発目フェーズ -->
+        <div id="firstSongPhase" class="hidden">
+            <div class="section">
+                <div class="section-title">1発目: 全員で歌う曲を選択</div>
+                <label>曲候補:</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="千本桜">
+                        <span>千本桜</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="紅蓮華">
+                        <span>紅蓮華</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="残酷な天使のテーゼ">
+                        <span>残酷な天使のテーゼ</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="夜に駆ける">
+                        <span>夜に駆ける</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="マリーゴールド">
+                        <span>マリーゴールド</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="香水">
+                        <span>香水</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="Lemon">
+                        <span>Lemon</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="ドライフラワー">
+                        <span>ドライフラワー</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="シンデレラガール">
+                        <span>シンデレラガール</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="アイドル">
+                        <span>アイドル</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="firstSong" value="その他">
+                        <span>その他</span>
+                    </label>
+                </div>
+                <button onclick="showFirstSongOrder()">マイク回し順を決定</button>
+            </div>
+
+            <div id="firstSongResult" class="result-box hidden">
+                <h3>🎵 1発目: マイク回し順</h3>
+                <div class="result-item">
+                    <strong>選曲:</strong> <span id="selectedSong" class="highlight"></span>
+                </div>
+                <div class="result-item" id="clockwiseOrder"></div>
+                <button class="next-round-btn" onclick="startSecondRound()">2発目以降へ進む</button>
+            </div>
+        </div>
+
+        <!-- 2発目以降フェーズ -->
+        <div id="mainPhase" class="hidden">
+            <div class="round-info" id="roundInfo">ラウンド 1</div>
+            
+            <div class="result-box">
+                <h3>🎲 今回の設定</h3>
+                <div class="result-item">
+                    <strong>誰が:</strong> <span id="who" class="highlight"></span>
+                </div>
+                <div class="result-item">
+                    <strong>何で:</strong> <span id="what" class="highlight"></span>
+                </div>
+            </div>
+
+            <div class="result-box">
+                <h3>📋 歌う順番</h3>
+                <ul id="orderList" class="order-list"></ul>
+            </div>
+
+            <button class="next-round-btn" onclick="nextRound()">次のラウンドへ</button>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let participants = [];
+        let roundNumber = 1;
+
+        // 「誰が」の選択肢
+        const whoOptions = ['個人', 'ペア', '2チーム'];
+
+        // 「何で」の選択肢
+        const whatOptions = [
+            '普通の採点',
+            '消費カロリー',
+            '音程バー非表示',
+            '分析採点',
+            'ランバト',
+            'しゃくり勝負',
+            'ビブラート勝負',
+            '抑揚勝負',
+            'ロングトーン勝負',
+            'リズム勝負'
+        ];
+
+        // 配列をシャッフルする関数
+        function shuffle(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // ランダムに1つ選ぶ関数
+        function randomChoice(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        // 1発目の準備
+        function startFirstSong() {
+            const count = document.getElementById('participantCount').value;
+            if (!count) {
+                alert('参加人数を選択してください');
+                return;
+            }
+
+            // 参加者にIDを付与 (A, B, C, ...)
+            participants = [];
+            for (let i = 0; i < parseInt(count); i++) {
+                participants.push(String.fromCharCode(65 + i)); // A=65
+            }
+
+            document.getElementById('setupPhase').classList.add('hidden');
+            document.getElementById('firstSongPhase').classList.remove('hidden');
+        }
+
+        // 1発目のマイク回し順を表示
+        function showFirstSongOrder() {
+            const selectedRadio = document.querySelector('input[name="firstSong"]:checked');
+            if (!selectedRadio) {
+                alert('曲を選択してください');
+                return;
+            }
+
+            const song = selectedRadio.value;
+            document.getElementById('selectedSong').textContent = song;
+
+            // ランダムに開始者を決定
+            const startPerson = randomChoice(participants);
+
+            // 「○○さんから時計回り」という形式で表示
+            const clockwiseElement = document.getElementById('clockwiseOrder');
+            clockwiseElement.innerHTML = `<strong>参加者 ${startPerson} さんから時計回り</strong>`;
+
+            document.getElementById('firstSongResult').classList.remove('hidden');
+        }
+
+        // 2発目以降のフェーズへ
+        function startSecondRound() {
+            document.getElementById('firstSongPhase').classList.add('hidden');
+            document.getElementById('mainPhase').classList.remove('hidden');
+            roundNumber = 1;
+            generateRound();
+        }
+
+        // ラウンドを生成
+        function generateRound() {
+            document.getElementById('roundInfo').textContent = `ラウンド ${roundNumber}`;
+
+            // 「誰が」と「何で」をランダム決定
+            const who = randomChoice(whoOptions);
+            const what = randomChoice(whatOptions);
+
+            document.getElementById('who').textContent = who;
+            document.getElementById('what').textContent = what;
+
+            // 順番を生成
+            generateOrder(who);
+        }
+
+        // 順番を生成
+        function generateOrder(who) {
+            const listElement = document.getElementById('orderList');
+            listElement.innerHTML = '';
+
+            let order = [];
+
+            if (who === '個人') {
+                // 個人: 全員をシャッフル
+                order = shuffle(participants).map(p => `参加者 ${p}`);
+            } else if (who === 'ペア') {
+                // ペア: 2人ずつランダムにペアリング
+                const shuffled = shuffle(participants);
+                for (let i = 0; i < shuffled.length; i += 2) {
+                    if (i + 1 < shuffled.length) {
+                        order.push(`ペア: ${shuffled[i]} & ${shuffled[i + 1]}`);
+                    } else {
+                        // 奇数人の場合、最後の人は単独
+                        order.push(`参加者 ${shuffled[i]} (単独)`);
+                    }
+                }
+                order = shuffle(order);
+            } else if (who === '2チーム') {
+                // 2チーム: 半分ずつに分ける
+                const shuffled = shuffle(participants);
+                const mid = Math.ceil(shuffled.length / 2);
+                const team1 = shuffled.slice(0, mid);
+                const team2 = shuffled.slice(mid);
+                
+                order = shuffle([
+                    `チーム1: ${team1.join(', ')}`,
+                    `チーム2: ${team2.join(', ')}`
+                ]);
+            }
+
+            // 順番を表示
+            order.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="order-number">${index + 1}</div>
+                    <div>${item}</div>
+                `;
+                listElement.appendChild(li);
+            });
+        }
+
+        // 次のラウンドへ
+        function nextRound() {
+            roundNumber++;
+            generateRound();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
