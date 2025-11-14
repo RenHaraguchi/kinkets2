@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kinket’s - カラオケ用ミニゲーム</title>
+  <style>
+    :root {
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #222;
+      background-color: #f5f5f5;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #121b3a;
+      color: #fff;
+      padding: 16px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.05em;
+    }
+    #stepIndicator {
+      margin-top: 6px;
+      font-size: 0.95rem;
+      opacity: 0.85;
+    }
+    main {
+      flex: 1;
+      padding: 24px 16px 32px;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .wizard-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+    }
+    section.step {
+      display: none;
+    }
+    section.step.active {
+      display: block;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+    }
+    p.description {
+      margin-top: 0;
+      color: #555;
+      line-height: 1.5;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    .selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .choice-btn {
+      border: 2px solid #d8d8d8;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 1rem;
+      background: #fafafa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .choice-btn.selected {
+      border-color: #1f4ac9;
+      background: #e8edff;
+      color: #1f4ac9;
+      font-weight: bold;
+    }
+    .nav-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    button.primary {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #1f4ac9;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+    button.secondary {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #1f4ac9;
+      background: #fff;
+      color: #1f4ac9;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .error-message {
+      color: #c0392b;
+      margin-top: 12px;
+    }
+    .info-box {
+      background: #fff4ce;
+      border-left: 4px solid #f1c40f;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-size: 0.95rem;
+    }
+    ul {
+      padding-left: 18px;
+      line-height: 1.6;
+      margin: 12px 0 0;
+    }
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 16px 0 20px;
+    }
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @media (max-width: 480px) {
+      .nav-buttons {
+        flex-direction: column;
+      }
+      button.primary,
+      button.secondary {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>kinket’s</h1>
+    <div id="stepIndicator">ステップ 1 / 3</div>
+  </header>
+
+  <main>
+    <div class="wizard-card">
+      <section class="step active" id="step-1">
+        <h2>ステップ1：人数を入力</h2>
+        <p class="description">参加する人数を入力してください</p>
+        <input type="number" id="participantInput" min="2" max="20" placeholder="例：4">
+        <p class="error-message" id="step1Error"></p>
+        <div class="nav-buttons">
+          <button class="primary" id="toStep2">次へ</button>
+        </div>
+      </section>
+
+      <section class="step" id="step-2">
+        <h2>ステップ2：全員で歌う曲を選ぼう</h2>
+        <p class="description">みんなで歌う1曲目を選んでください</p>
+        <div class="selection-grid" id="songOptions">
+          <button class="choice-btn" data-song="キセキ">キセキ</button>
+          <button class="choice-btn" data-song="小さな恋のうた">小さな恋のうた</button>
+          <button class="choice-btn" data-song="残酷な天使のテーゼ">残酷な天使のテーゼ</button>
+          <button class="choice-btn" data-song="チェリー">チェリー</button>
+          <button class="choice-btn" data-song="サウダージ">サウダージ</button>
+        </div>
+        <div class="info-box" id="songInfo">選曲：未選択</div>
+        <p class="error-message" id="step2Error"></p>
+        <div class="nav-buttons">
+          <button class="secondary" id="backToStep1">戻る</button>
+          <button class="primary" id="toStep3Teams">次へ</button>
+        </div>
+      </section>
+
+      <section class="step" id="step-3-teams">
+        <h2>ステップ3-1：2人1チームで対戦</h2>
+        <p class="description">ランダムに2人1チームを作ります。<br>下のミニゲームルールを選んでください。</p>
+        <div class="info-box" id="selectedSongDisplay">選曲：-</div>
+        <div class="radio-group">
+          <label><input type="radio" name="rule" value="小数点以下の点数勝負">小数点以下の点数勝負</label>
+          <label><input type="radio" name="rule" value="消費カロリー量勝負">消費カロリー量勝負</label>
+        </div>
+        <button class="primary" id="generateTeams">チームをランダムに作成</button>
+        <p class="error-message" id="teamError"></p>
+        <div class="info-box" id="ruleInfo">ミニゲームルール：未選択</div>
+        <ul id="teamList"></ul>
+        <div class="nav-buttons">
+          <button class="secondary" id="backToStep2">戻る</button>
+          <button class="primary" id="toStep3Solo">個人戦へ進む</button>
+        </div>
+      </section>
+
+      <section class="step" id="step-3-solo">
+        <h2>ステップ3-2：個人戦（テーマ縛り）</h2>
+        <p class="description">ランダムな順番で1人ずつ歌います。<br>表示されるテーマに合う曲を選んでください。</p>
+        <button class="primary" id="shuffleSolo">順番とテーマをシャッフル</button>
+        <button class="secondary" id="reshuffleSolo" style="margin-top: 12px;">もう一度シャッフル</button>
+        <ul id="soloList"></ul>
+        <div class="nav-buttons">
+          <button class="secondary" id="restart">最初からやり直す</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // アプリ全体の状態を保持
+    const state = {
+      participants: [],
+      selectedSong: null,
+      selectedRule: null,
+      teams: [],
+      soloOrder: []
+    };
+
+    const sections = [
+      document.getElementById('step-1'),
+      document.getElementById('step-2'),
+      document.getElementById('step-3-teams'),
+      document.getElementById('step-3-solo')
+    ];
+    const stepIndicator = document.getElementById('stepIndicator');
+    const stepNumbers = [1, 2, 3, 3]; // 3-1と3-2はどちらもステップ3として表示
+
+    const participantInput = document.getElementById('participantInput');
+    const step1Error = document.getElementById('step1Error');
+    const step2Error = document.getElementById('step2Error');
+    const teamError = document.getElementById('teamError');
+
+    // 現在のステップを切り替え
+    function showStep(index) {
+      sections.forEach((section, idx) => {
+        section.classList.toggle('active', idx === index);
+      });
+      stepIndicator.textContent = `ステップ ${stepNumbers[index]} / 3`;
+    }
+
+    // 参加人数のバリデーションと保存
+    document.getElementById('toStep2').addEventListener('click', () => {
+      const count = Number(participantInput.value);
+      if (!count || count < 2) {
+        step1Error.textContent = '2人以上の人数を入力してください';
+        return;
+      }
+      step1Error.textContent = '';
+      state.participants = Array.from({ length: count }, (_, i) => i + 1);
+      showStep(1);
+    });
+
+    document.getElementById('backToStep1').addEventListener('click', () => {
+      showStep(0);
+    });
+
+    // 曲の選択を処理
+    const songButtons = Array.from(document.querySelectorAll('#songOptions .choice-btn'));
+    const songInfo = document.getElementById('songInfo');
+    const selectedSongDisplay = document.getElementById('selectedSongDisplay');
+
+    songButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        songButtons.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        state.selectedSong = btn.dataset.song;
+        songInfo.textContent = `選曲：${state.selectedSong}`;
+        selectedSongDisplay.textContent = `選曲：${state.selectedSong}`;
+        step2Error.textContent = '';
+      });
+    });
+
+    document.getElementById('toStep3Teams').addEventListener('click', () => {
+      if (!state.selectedSong) {
+        step2Error.textContent = '曲を1つ選択してください';
+        return;
+      }
+      showStep(2);
+    });
+
+    document.getElementById('backToStep2').addEventListener('click', () => {
+      showStep(1);
+    });
+
+    // チーム作成処理
+    const ruleInfo = document.getElementById('ruleInfo');
+    const teamList = document.getElementById('teamList');
+
+    document.getElementById('generateTeams').addEventListener('click', () => {
+      const selectedRuleInput = document.querySelector('input[name="rule"]:checked');
+      if (!selectedRuleInput) {
+        teamError.textContent = 'ミニゲームルールを選んでください';
+        return;
+      }
+      teamError.textContent = '';
+      state.selectedRule = selectedRuleInput.value;
+      ruleInfo.textContent = `ミニゲームルール：${state.selectedRule}`;
+
+      const shuffled = [...state.participants];
+      for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      const teams = [];
+      let index = 0;
+      while (index < shuffled.length) {
+        if ((shuffled.length - index) === 3) {
+          teams.push(shuffled.slice(index));
+          break;
+        }
+        teams.push(shuffled.slice(index, index + 2));
+        index += 2;
+      }
+      state.teams = teams;
+
+      teamList.innerHTML = '';
+      teams.forEach((team, teamIdx) => {
+        const li = document.createElement('li');
+        li.textContent = `チーム${teamIdx + 1}：参加者${team.join('番 & 参加者')}番`;
+        teamList.appendChild(li);
+      });
+    });
+
+    document.getElementById('toStep3Solo').addEventListener('click', () => {
+      showStep(3);
+    });
+
+    // 個人戦シャッフル処理
+    const soloList = document.getElementById('soloList');
+    const themes = [
+      '失恋ソング',
+      '元気が出る曲',
+      'アニメソング',
+      '昭和っぽい曲',
+      '盛り上がる曲',
+      '切ない曲',
+      '自分の十八番'
+    ];
+
+    function shuffleSoloOrder() {
+      const shuffled = [...state.participants];
+      for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      state.soloOrder = shuffled.map(participant => {
+        const theme = themes[Math.floor(Math.random() * themes.length)];
+        return { participant, theme };
+      });
+
+      soloList.innerHTML = '';
+      state.soloOrder.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.textContent = `${idx + 1}番目：参加者${item.participant} → テーマ「${item.theme}」`;
+        soloList.appendChild(li);
+      });
+    }
+
+    document.getElementById('shuffleSolo').addEventListener('click', shuffleSoloOrder);
+    document.getElementById('reshuffleSolo').addEventListener('click', shuffleSoloOrder);
+
+    document.getElementById('restart').addEventListener('click', () => {
+      // 初期状態へリセット
+      participantInput.value = '';
+      state.participants = [];
+      state.selectedSong = null;
+      state.selectedRule = null;
+      state.teams = [];
+      state.soloOrder = [];
+      songButtons.forEach(btn => btn.classList.remove('selected'));
+      songInfo.textContent = '選曲：未選択';
+      selectedSongDisplay.textContent = '選曲：-';
+      ruleInfo.textContent = 'ミニゲームルール：未選択';
+      teamList.innerHTML = '';
+      soloList.innerHTML = '';
+      const checkedRule = document.querySelector('input[name="rule"]:checked');
+      if (checkedRule) checkedRule.checked = false;
+      showStep(0);
+    });
+  </script>
+</body>
+</html>
