@@ -71,6 +71,47 @@
             outline: none;
         }
 
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:hover, input[type="text"]:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        input[type="text"].error {
+            border-color: #ff4444;
+            background-color: #fff5f5;
+        }
+
+        .error-message {
+            color: #ff4444;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .name-input-item {
+            margin-bottom: 15px;
+        }
+
+        .name-input-label {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
         .radio-group {
             margin-bottom: 20px;
         }
@@ -211,6 +252,76 @@
             background: #f8f9ff;
             border-radius: 10px;
         }
+
+        .info-text {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-body {
+            color: #333;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .modal-body p {
+            margin-bottom: 15px;
+        }
+
+        .close-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 30px;
+            width: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .clickable {
+            cursor: pointer;
+            text-decoration: underline;
+            color: #667eea;
+        }
+
+        .clickable:hover {
+            color: #764ba2;
+        }
     </style>
 </head>
 <body>
@@ -244,6 +355,16 @@
                     <option value="19">19人</option>
                     <option value="20">20人</option>
                 </select>
+                <button onclick="showNameInput()">次へ</button>
+            </div>
+        </div>
+
+        <!-- 名前入力フェーズ -->
+        <div id="nameInputPhase" class="hidden">
+            <div class="section">
+                <div class="section-title">参加者の名前を入力</div>
+                <div class="info-text">※全ての参加者の名前を入力してください（必須）</div>
+                <div id="nameInputContainer"></div>
                 <button onclick="startFirstSong()">1発目の準備へ</button>
             </div>
         </div>
@@ -323,7 +444,8 @@
                     <strong>誰が:</strong> <span id="who" class="highlight"></span>
                 </div>
                 <div class="result-item">
-                    <strong>何で:</strong> <span id="what" class="highlight"></span>
+                    <strong>何で:</strong> <span id="what" class="highlight clickable" onclick="showRuleModal()"></span>
+                    <div style="font-size: 12px; color: #888; margin-top: 5px;">※ルールの詳細を確認したいならクリック</div>
                 </div>
             </div>
 
@@ -334,11 +456,23 @@
 
             <button class="next-round-btn" onclick="nextRound()">次のラウンドへ</button>
         </div>
+
+        <!-- ルール説明モーダル -->
+        <div id="ruleModal" class="modal" onclick="closeModal(event)">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header" id="modalTitle">ルール説明</div>
+                <div class="modal-body" id="modalBody">
+                    <!-- JavaScriptで動的に内容が挿入されます -->
+                </div>
+                <button class="close-btn" onclick="closeModal()">閉じる</button>
+            </div>
+        </div>
     </div>
 
     <script>
         // グローバル変数
         let participants = [];
+        let participantNames = {};
         let roundNumber = 1;
 
         // 「誰が」の選択肢
@@ -358,6 +492,41 @@
             '点数勝負（小数点以下）'
         ];
 
+        // ルール説明
+        const ruleDescriptions = {
+            '普通の採点': '通常の採点モードで歌います。総合得点で競います。',
+            '消費カロリー': '歌唱時の消費カロリーで競います。激しく歌って消費カロリーを稼ぎましょう！',
+            '音程バー非表示': '音程バーを非表示にして歌います。自分の感覚だけを頼りに歌いましょう。',
+            'しゃくり勝負': 'しゃくりの回数で競います。音程を下から上にしゃくり上げるテクニックです。',
+            'ビブラート勝負': 'ビブラートの回数や秒数で競います。声を震わせるテクニックです。',
+            '抑揚勝負': '抑揚の点数で競います。声の強弱をつけて表現力豊かに歌いましょう。',
+            'ロングトーン勝負': 'ロングトーンの秒数で競います。長く安定した音を出し続けるテクニックです。',
+            'リズム勝負': 'リズム点数で競います。正確なタイミングで歌うことが重要です。',
+            'アニソン縛り': 'アニメソング限定で歌います。好きなアニソンで勝負しましょう！',
+            '点数勝負（小数点以下）': '総合得点の小数点以下の数値で競います。例：95.342点なら342が得点です。運要素が強いモードです。'
+        };
+
+        let currentRule = '';
+
+        // モーダルを表示
+        function showRuleModal() {
+            const rule = document.getElementById('what').textContent;
+            currentRule = rule;
+            
+            document.getElementById('modalTitle').textContent = rule;
+            document.getElementById('modalBody').innerHTML = `<p>${ruleDescriptions[rule] || 'ルールの説明がありません。'}</p>`;
+            
+            document.getElementById('ruleModal').classList.add('active');
+        }
+
+        // モーダルを閉じる
+        function closeModal(event) {
+            // 引数がない場合、またはモーダル背景をクリックした場合
+            if (!event || event.target.id === 'ruleModal') {
+                document.getElementById('ruleModal').classList.remove('active');
+            }
+        }
+
         // 配列をシャッフルする関数
         function shuffle(array) {
             const newArray = [...array];
@@ -373,8 +542,13 @@
             return array[Math.floor(Math.random() * array.length)];
         }
 
-        // 1発目の準備
-        function startFirstSong() {
+        // 参加者IDから表示名を取得
+        function getDisplayName(id) {
+            return participantNames[id];
+        }
+
+        // 名前入力画面を表示
+        function showNameInput() {
             const count = document.getElementById('participantCount').value;
             if (!count) {
                 alert('参加人数を選択してください');
@@ -387,7 +561,81 @@
                 participants.push(String.fromCharCode(65 + i)); // A=65
             }
 
+            // 名前入力フォームを生成
+            const container = document.getElementById('nameInputContainer');
+            container.innerHTML = '';
+            
+            participants.forEach((id, index) => {
+                const div = document.createElement('div');
+                div.className = 'name-input-item';
+                div.innerHTML = `
+                    <label class="name-input-label">${index + 1}人目の名前:</label>
+                    <input type="text" id="name_${id}" placeholder="例: 太郎" required>
+                    <div class="error-message" id="error_${id}">名前を入力してください</div>
+                `;
+                container.appendChild(div);
+                
+                // 入力時にエラー表示をクリア
+                const input = document.getElementById(`name_${id}`);
+                if (input) {
+                    input.addEventListener('input', function() {
+                        if (this.value.trim()) {
+                            this.classList.remove('error');
+                            const errorMsg = document.getElementById(`error_${id}`);
+                            if (errorMsg) {
+                                errorMsg.classList.remove('show');
+                            }
+                        }
+                    });
+                }
+            });
+
             document.getElementById('setupPhase').classList.add('hidden');
+            document.getElementById('nameInputPhase').classList.remove('hidden');
+        }
+
+        // 1発目の準備
+        function startFirstSong() {
+            // まず全てのエラー表示をクリア
+            participants.forEach(id => {
+                const input = document.getElementById(`name_${id}`);
+                const errorMsg = document.getElementById(`error_${id}`);
+                if (input) {
+                    input.classList.remove('error');
+                }
+                if (errorMsg) {
+                    errorMsg.classList.remove('show');
+                }
+            });
+
+            // 入力された名前を保存・バリデーション
+            participantNames = {};
+            let hasError = false;
+            
+            participants.forEach((id, index) => {
+                const input = document.getElementById(`name_${id}`);
+                const errorMsg = document.getElementById(`error_${id}`);
+                
+                if (input && input.value.trim()) {
+                    participantNames[id] = input.value.trim();
+                } else {
+                    // エラー表示
+                    hasError = true;
+                    if (input) {
+                        input.classList.add('error');
+                    }
+                    if (errorMsg) {
+                        errorMsg.classList.add('show');
+                    }
+                }
+            });
+
+            // エラーがある場合は処理を中断
+            if (hasError) {
+                return;
+            }
+
+            document.getElementById('nameInputPhase').classList.add('hidden');
             document.getElementById('firstSongPhase').classList.remove('hidden');
         }
 
@@ -407,7 +655,7 @@
 
             // 「○○さんから時計回り」という形式で表示
             const clockwiseElement = document.getElementById('clockwiseOrder');
-            clockwiseElement.innerHTML = `<strong>参加者 ${startPerson} さんから時計回り</strong>`;
+            clockwiseElement.innerHTML = `<strong>${getDisplayName(startPerson)}さんから時計回り</strong>`;
 
             document.getElementById('firstSongResult').classList.remove('hidden');
         }
@@ -444,16 +692,16 @@
 
             if (who === '個人') {
                 // 個人: 全員をシャッフル
-                order = shuffle(participants).map(p => `参加者 ${p}`);
+                order = shuffle(participants).map(p => getDisplayName(p));
             } else if (who === 'ペア') {
                 // ペア: 2人ずつランダムにペアリング
                 const shuffled = shuffle(participants);
                 for (let i = 0; i < shuffled.length; i += 2) {
                     if (i + 1 < shuffled.length) {
-                        order.push(`ペア: ${shuffled[i]} & ${shuffled[i + 1]}`);
+                        order.push(`ペア: ${getDisplayName(shuffled[i])} & ${getDisplayName(shuffled[i + 1])}`);
                     } else {
                         // 奇数人の場合、最後の人は単独
-                        order.push(`参加者 ${shuffled[i]} (単独)`);
+                        order.push(`${getDisplayName(shuffled[i])} (単独)`);
                     }
                 }
                 order = shuffle(order);
@@ -465,8 +713,8 @@
                 const team2 = shuffled.slice(mid);
                 
                 order = shuffle([
-                    `チーム1: ${team1.join(', ')}`,
-                    `チーム2: ${team2.join(', ')}`
+                    `チーム1: ${team1.map(p => getDisplayName(p)).join(', ')}`,
+                    `チーム2: ${team2.map(p => getDisplayName(p)).join(', ')}`
                 ]);
             }
 
