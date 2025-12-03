@@ -47,8 +47,16 @@
                 <div class="section-title">参加者の名前を入力</div>
                 <div class="info-text">※全ての参加者の名前を入力してください（必須）</div>
                 <div id="nameInputContainer"></div>
-                <button onclick="startFirstSong()">1発目の準備へ</button>
+                <button onclick="showWhatOptions()">ゲーム一覧へ</button>
             </div>
+        </div>
+
+        <!-- ゲーム一覧フェーズ -->
+        <div id="ruleListPhase" class="section hidden">
+            <div class="section-title">🎲 ゲーム一覧（※ルールの詳細を確認したいならクリック）</div>
+            <div>この後行うゲームの一覧です。やりたいゲームにチェックを入れてください。</div>
+            <div id="whatOptionList" class="option-list"></div>
+            <button onclick="startFirstSong()">1発目の準備へ</button>
         </div>
 
         <!-- 1発目フェーズ -->

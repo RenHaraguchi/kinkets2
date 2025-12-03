@@ -17,8 +17,35 @@ const whatOptions = [
     'ロングトーン勝負',
     'リズム勝負',
     'アニソン縛り',
-    '点数勝負（小数点以下）'
+    '点数勝負（小数点以下）', 
+    'アカペラ',
+    'アイドル曲縛り',
+    '生まれ年リリース曲で対決',
+    'ペアで互いの曲選んで合計点対決',
+    '漢字のアーティスト縛り',
+    'AI加点対決',
+    'イントロドン',
+    '1人目が入れたアーティスト縛り',
+    '英語表記のアーティスト縛り',
+    '点数の近さ勝負',
+    'しゃくり禁止・ビブラート禁止',
+    'ワンフレーズ回転',
+    '歌詞見ないチャレンジ',
+    '2015年の曲対決',
+    'ドラマ映画主題歌縛り',
+    'タイトルに色が入る曲縛り',
+    'ランキング50位までの曲から選ぶ',
+    '純粋に盛り上げ対決',
+    '合いの手がある曲縛り',
+    '恋愛ソング縛り',
+    '失恋・片思い曲縛り',
+    '今の季節の曲縛り',
+    '今年リリースの曲縛り',
+    'タイトル10文字以上縛り'
 ];
+
+// 選択されたルールのみを格納
+let selectedWhatOptions = [];
 
 // ルール説明
 const ruleDescriptions = {
@@ -31,7 +58,31 @@ const ruleDescriptions = {
     'ロングトーン勝負': 'ロングトーンの秒数で競います。長く安定した音を出し続けるテクニックです。',
     'リズム勝負': 'リズム点数で競います。正確なタイミングで歌うことが重要です。',
     'アニソン縛り': 'アニメソング限定で歌います。好きなアニソンで勝負しましょう！',
-    '点数勝負（小数点以下）': '総合得点の小数点以下の数値で競います。例：95.342点なら342が得点です。運要素が強いモードです。'
+    '点数勝負（小数点以下）': '総合得点の小数点以下の数値で競います。例：95.342点なら342が得点です。運要素が強いモードです。', 
+    'アカペラ': '伴奏なしで歌います。声だけでどれだけ魅せられるか勝負！',
+    'アイドル曲縛り': 'アイドルの曲のみ選曲できます。推しの曲で勝負！',
+    '生まれ年リリース曲で対決': '自分の生まれた年に発売された曲のみで対決します。',
+    'ペアで互いの曲選んで合計点対決': 'ペア同士で相手に歌わせる曲を指定し、2人の合計点で勝負します。',
+    '漢字のアーティスト縛り': 'アーティスト名に漢字が入っている歌手の曲のみ選曲できます。',
+    'AI加点対決': 'AI加点のみで勝負します。',
+    'イントロドン': 'イントロを聞いて曲名を当て、正解者がその曲を歌います。',
+    '1人目が入れたアーティスト縛り': '最初に歌った人と同じアーティストの曲だけを選べる縛りです。',
+    '英語表記のアーティスト縛り': '英語で表記されるアーティストの曲のみ選曲できます。',
+    '点数の近さ勝負': '設定した目標点にどれだけ近づくかで勝敗が決まります。',
+    'しゃくり禁止・ビブラート禁止': 'しゃくりとビブラートを一切使わずに歌う制限プレイです。',
+    'ワンフレーズ回転': '1フレーズごとに歌う人を交代していくリレー形式です。',
+    '歌詞見ないチャレンジ': '歌詞表示をオフにして、記憶だけで歌い切れるか挑戦します。',
+    '2015年の曲対決': '2015年にリリースされた曲限定で歌います。',
+    'ドラマ映画主題歌縛り': 'ドラマ・映画の主題歌に限定して選曲するモードです。',
+    'タイトルに色が入る曲縛り': 'タイトルに色名が含まれる曲のみ選べます。例：赤いスイートピー',
+    'ランキング50位までの曲から選ぶ': 'ランキング上位50曲からのみ選曲できます。',
+    '純粋に盛り上げ対決': '点数ではなく、盛り上げ度・ノリ・雰囲気で勝負します。',
+    '合いの手がある曲縛り': '合いの手・コールのある曲だけで盛り上がるモードです。',
+    '恋愛ソング縛り': '恋愛テーマの曲に限定して選曲するモードです。',
+    '失恋・片思い曲縛り': '失恋・片思いをテーマにした切ない曲だけを歌います。',
+    '今の季節の曲縛り': '現在の季節に関連した曲だけを選ぶ季節しばりモードです。',
+    '今年リリースの曲縛り': '今年リリースされた最新曲のみを歌うトレンド縛りです。',
+    'タイトル10文字以上縛り': '曲名が10文字以上の曲のみ選べます。',
 };
 
 let currentRule = '';
@@ -49,13 +100,12 @@ function showRuleModal() {
 
 // モーダルを閉じる
 function closeModal(event) {
-    // 引数がない場合、またはモーダル背景をクリックした場合
     if (!event || event.target.id === 'ruleModal') {
         document.getElementById('ruleModal').classList.remove('active');
     }
 }
 
-// 配列をシャッフルする関数
+// 配列をシャッフル
 function shuffle(array) {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -65,17 +115,17 @@ function shuffle(array) {
     return newArray;
 }
 
-// ランダムに1つ選ぶ関数
+// ランダム選択
 function randomChoice(array) {
     return array[Math.floor(Math.random() * array.length)];
 }
 
-// 参加者IDから表示名を取得
+// 参加者IDから表示名取得
 function getDisplayName(id) {
     return participantNames[id];
 }
 
-// 名前入力画面を表示
+// 名前入力画面表示
 function showNameInput() {
     const count = document.getElementById('participantCount').value;
     if (!count) {
@@ -83,13 +133,11 @@ function showNameInput() {
         return;
     }
 
-    // 参加者にIDを付与 (A, B, C, ...)
     participants = [];
     for (let i = 0; i < parseInt(count); i++) {
         participants.push(String.fromCharCode(65 + i)); // A=65
     }
 
-    // 名前入力フォームを生成
     const container = document.getElementById('nameInputContainer');
     container.innerHTML = '';
     
@@ -103,16 +151,13 @@ function showNameInput() {
         `;
         container.appendChild(div);
         
-        // 入力時にエラー表示をクリア
         const input = document.getElementById(`name_${id}`);
         if (input) {
             input.addEventListener('input', function() {
                 if (this.value.trim()) {
                     this.classList.remove('error');
                     const errorMsg = document.getElementById(`error_${id}`);
-                    if (errorMsg) {
-                        errorMsg.classList.remove('show');
-                    }
+                    if (errorMsg) errorMsg.classList.remove('show');
                 }
             });
         }
@@ -122,21 +167,71 @@ function showNameInput() {
     document.getElementById('nameInputPhase').classList.remove('hidden');
 }
 
+// ルール一覧画面（チェックボックス付き）
+function showWhatOptions() {
+    const container = document.getElementById('whatOptionList');
+    container.innerHTML = '';
+
+    whatOptions.forEach(option => {
+        const div = document.createElement('div');
+        div.className = 'option-item';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `check_${option}`;
+        checkbox.value = option;
+        checkbox.checked = true; // 最初からチェックON
+
+        const label = document.createElement('label');
+        label.htmlFor = `check_${option}`;
+        label.textContent = option;
+        label.className = 'clickable';
+        label.style.marginLeft = '5px';
+
+        // ラベルクリックでモーダル表示（チェック状態を変えない）
+        label.addEventListener('click', (e) => {
+            e.preventDefault();   // チェック状態変更を防ぐ
+            e.stopPropagation();  // バブリングを防ぐ
+            document.getElementById('modalTitle').textContent = option;
+            document.getElementById('modalBody').innerHTML = `<p>${ruleDescriptions[option] || 'ルールの説明がありません。'}</p>`;
+            document.getElementById('ruleModal').classList.add('active');
+        });
+
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        container.appendChild(div);
+    });
+
+    document.getElementById('nameInputPhase').classList.add('hidden');
+    document.getElementById('ruleListPhase').classList.remove('hidden');
+}
+
+
+// チェックされたルールだけ抽出
+function filterSelectedRules() {
+    selectedWhatOptions = [];
+    whatOptions.forEach(option => {
+        const checkbox = document.getElementById(`check_${option}`);
+        if (checkbox && checkbox.checked) selectedWhatOptions.push(option);
+    });
+    if (selectedWhatOptions.length === 0) {
+        alert('少なくとも1つのルールを選択してください');
+        return false;
+    }
+    return true;
+}
+
 // 1発目の準備
 function startFirstSong() {
-    // まず全てのエラー表示をクリア
+    if (!filterSelectedRules()) return;
+
     participants.forEach(id => {
         const input = document.getElementById(`name_${id}`);
         const errorMsg = document.getElementById(`error_${id}`);
-        if (input) {
-            input.classList.remove('error');
-        }
-        if (errorMsg) {
-            errorMsg.classList.remove('show');
-        }
+        if (input) input.classList.remove('error');
+        if (errorMsg) errorMsg.classList.remove('show');
     });
 
-    // 入力された名前を保存・バリデーション
     participantNames = {};
     let hasError = false;
     
@@ -147,27 +242,19 @@ function startFirstSong() {
         if (input && input.value.trim()) {
             participantNames[id] = input.value.trim();
         } else {
-            // エラー表示
             hasError = true;
-            if (input) {
-                input.classList.add('error');
-            }
-            if (errorMsg) {
-                errorMsg.classList.add('show');
-            }
+            if (input) input.classList.add('error');
+            if (errorMsg) errorMsg.classList.add('show');
         }
     });
 
-    // エラーがある場合は処理を中断
-    if (hasError) {
-        return;
-    }
+    if (hasError) return;
 
-    document.getElementById('nameInputPhase').classList.add('hidden');
+    document.getElementById('ruleListPhase').classList.add('hidden');
     document.getElementById('firstSongPhase').classList.remove('hidden');
 }
 
-// 1発目のマイク回し順を表示
+// 1発目のマイク回し順表示
 function showFirstSongOrder() {
     const selectedRadio = document.querySelector('input[name="firstSong"]:checked');
     if (!selectedRadio) {
@@ -178,10 +265,7 @@ function showFirstSongOrder() {
     const song = selectedRadio.value;
     document.getElementById('selectedSong').textContent = song;
 
-    // ランダムに開始者を決定
     const startPerson = randomChoice(participants);
-
-    // 「○○さんから時計回り」という形式で表示
     const clockwiseElement = document.getElementById('clockwiseOrder');
     clockwiseElement.innerHTML = `<strong>${getDisplayName(startPerson)}さんから時計回り</strong>`;
 
@@ -196,22 +280,20 @@ function startSecondRound() {
     generateRound();
 }
 
-// ラウンドを生成
+// ラウンド生成
 function generateRound() {
     document.getElementById('roundInfo').textContent = `ラウンド ${roundNumber}`;
 
-    // 「誰が」と「何で」をランダム決定
     const who = randomChoice(whoOptions);
-    const what = randomChoice(whatOptions);
+    const what = randomChoice(selectedWhatOptions);
 
     document.getElementById('who').textContent = who;
     document.getElementById('what').textContent = what;
 
-    // 順番を生成
     generateOrder(who);
 }
 
-// 順番を生成
+// 順番生成
 function generateOrder(who) {
     const listElement = document.getElementById('orderList');
     listElement.innerHTML = '';
@@ -219,22 +301,18 @@ function generateOrder(who) {
     let order = [];
 
     if (who === '個人') {
-        // 個人: 全員をシャッフル
         order = shuffle(participants).map(p => getDisplayName(p));
     } else if (who === 'ペア') {
-        // ペア: 2人ずつランダムにペアリング
         const shuffled = shuffle(participants);
         for (let i = 0; i < shuffled.length; i += 2) {
             if (i + 1 < shuffled.length) {
                 order.push(`ペア: ${getDisplayName(shuffled[i])} & ${getDisplayName(shuffled[i + 1])}`);
             } else {
-                // 奇数人の場合、最後の人は単独
                 order.push(`${getDisplayName(shuffled[i])} (単独)`);
             }
         }
         order = shuffle(order);
     } else if (who === '2チーム') {
-        // 2チーム: 半分ずつに分ける
         const shuffled = shuffle(participants);
         const mid = Math.ceil(shuffled.length / 2);
         const team1 = shuffled.slice(0, mid);
@@ -246,7 +324,6 @@ function generateOrder(who) {
         ]);
     }
 
-    // 順番を表示
     order.forEach((item, index) => {
         const li = document.createElement('li');
         li.innerHTML = `
@@ -257,7 +334,7 @@ function generateOrder(who) {
     });
 }
 
-// 次のラウンドへ
+// 次ラウンド
 function nextRound() {
     roundNumber++;
     generateRound();

@@ -315,3 +315,19 @@ button:active {
 .clickable:hover {
     color: #764ba2;
 }
+
+.option-item {
+    display: flex;
+    align-items: center; /* 垂直方向中央揃え */
+    margin-bottom: 8px; /* ルール間のスペース */
+}
+
+.option-item input[type="checkbox"] {
+    margin: 0; /* チェックボックス周りの余白をリセット */
+}
+
+.option-item label {
+    margin-left: 5px; /* チェックボックスとラベルの間隔 */
+    cursor: pointer;  /* ホバー時に指マーク */
+    line-height: 1.2; /* チェックボックスに合わせる */
+}
